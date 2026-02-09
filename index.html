@@ -27,6 +27,7 @@ body {
   border-radius: 12px;
   max-width: 70%;
   clear: both;
+  word-wrap: break-word;
 }
 .message.user1 {
   background-color: #a0e7e5;
@@ -70,7 +71,8 @@ body {
 
 <script>
 // username for testing
-const username = prompt("Enter your name:", "Sonu");
+let username = prompt("Enter your name:", "Sonu");
+if(!username) username = "Sonu";
 
 // array to hold messages
 const messages = [];
@@ -91,17 +93,18 @@ function fetchMessages() {
 // send message
 function sendMessage() {
   const textInput = document.getElementById("text");
-  const text = textInput.value;
-  if (!text) return;
+  const text = textInput.value.trim();
+  if(!text) return; // ignore empty messages
   messages.push({ user: username, text: text });
   textInput.value = "";
   fetchMessages();
+  textInput.focus(); // cursor wapas input me
 }
 
 // button click
 document.getElementById("send").addEventListener("click", sendMessage);
 
-// optional: press Enter to send
+// enter key send
 document.getElementById("text").addEventListener("keypress", function(e){
   if(e.key === "Enter") sendMessage();
 });
