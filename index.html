@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chat App</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Offline Chat</title>
 <style>
 body {
   font-family: sans-serif;
@@ -18,7 +17,7 @@ body {
   background: #fff;
   border-radius: 10px;
   padding: 10px;
-  height: 75vh; /* thoda chhota kiya taaki input upar ho */
+  height: 75vh;
   overflow-y: scroll;
   margin-top: 10px;
 }
@@ -42,8 +41,6 @@ body {
   margin: 5px auto;
   display: flex;
   padding: 5px;
-  position: relative;
-  bottom: 0;
 }
 #text {
   flex: 1;
@@ -72,66 +69,42 @@ body {
 </div>
 
 <script>
-// ✅ Supabase setup with your anon public key
-const supabaseUrl = "https://hfzqtavmibzfivcsppxw.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmenF0YXZtaWJ6Zml2Y3NwcHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MjMyNDksImV4cCI6MjA4NjE5OTI0OX0.VNiwt6SSHjHUln6fJJ3ypjYvNG_u61krVK49lH89eLc";
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
 // username for testing
 const username = prompt("Enter your name:", "Sonu");
 
+// array to hold messages
+const messages = [];
+
 // fetch and show messages
-async function fetchMessages() {
-  let { data, error } = await supabase
-    .from("messages")
-    .select("*")
-    .order("id", { ascending: true });
-  if (error) console.log(error);
-  else {
-    const chat = document.getElementById("chat-container");
-    chat.innerHTML = "";
-    data.forEach(msg => {
-      const div = document.createElement("div");
-      div.className = "message " + (msg.user === username ? "user2" : "user1");
-      div.textContent = msg.user + ": " + msg.text;
-      chat.appendChild(div);
-    });
-    chat.scrollTop = chat.scrollHeight;
-  }
+function fetchMessages() {
+  const chat = document.getElementById("chat-container");
+  chat.innerHTML = "";
+  messages.forEach(msg => {
+    const div = document.createElement("div");
+    div.className = "message " + (msg.user === username ? "user2" : "user1");
+    div.textContent = msg.user + ": " + msg.text;
+    chat.appendChild(div);
+  });
+  chat.scrollTop = chat.scrollHeight;
 }
 
 // send message
-async function sendMessage() {
+function sendMessage() {
   const textInput = document.getElementById("text");
   const text = textInput.value;
   if (!text) return;
-
-  let { data, error } = await supabase
-    .from("messages")
-    .insert([{ user: username, text: text }]);
-  
-  if (error) console.log(error);
-  else {
-    textInput.value = "";
-    fetchMessages();
-  }
+  messages.push({ user: username, text: text });
+  textInput.value = "";
+  fetchMessages();
 }
 
 // button click
 document.getElementById("send").addEventListener("click", sendMessage);
 
-// realtime subscription
-supabase
-  .channel('messages')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'messages' },
-    fetchMessages
-  )
-  .subscribe();
-
-// fetch messages every 2 sec (backup for mobile)
-setInterval(fetchMessages, 2000);
+// optional: press Enter to send
+document.getElementById("text").addEventListener("keypress", function(e){
+  if(e.key === "Enter") sendMessage();
+});
 </script>
 
 </body>
