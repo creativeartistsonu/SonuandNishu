@@ -1,177 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Private Chat</title>
-
-  <!-- Supabase library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    body{
-      margin:0;
-      font-family:sans-serif;
-      height:100vh;
-      display:flex;
-      flex-direction:column;
-      background:#111;
-      background-size:cover;
-      background-position:center;
-    }
-
-    #chat{
-      flex:1;
-      overflow:auto;
-      padding:10px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    .msg{
-      max-width:70%;
-      padding:8px 12px;
-      border-radius:12px;
-      color:white;
-      word-wrap:break-word;
-    }
-
-    .me{
-      align-self:flex-end;
-      background:#00c853;
-    }
-
-    .other{
-      align-self:flex-start;
-      background:#2962ff;
-    }
-
-    img{
-      max-width:160px;
-      border-radius:8px;
-      margin-top:4px;
-    }
-
-    #bar{
-      display:flex;
-      gap:6px;
-      padding:6px;
-      background:#00000090;
-    }
-
-    input[type="text"]{
-      flex:1;
-      padding:6px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat App</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body {
+  font-family: sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+}
+#chat-container {
+  max-width: 500px;
+  margin: auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  height: 75vh; /* thoda chhota kiya taaki input upar ho */
+  overflow-y: scroll;
+  margin-top: 10px;
+}
+.message {
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 12px;
+  max-width: 70%;
+  clear: both;
+}
+.message.user1 {
+  background-color: #a0e7e5;
+  float: left;
+}
+.message.user2 {
+  background-color: #b4f8c8;
+  float: right;
+}
+#input-container {
+  max-width: 500px;
+  margin: 5px auto;
+  display: flex;
+  padding: 5px;
+  position: relative;
+  bottom: 0;
+}
+#text {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+#send {
+  padding: 8px 12px;
+  margin-left: 5px;
+  border-radius: 8px;
+  border: none;
+  background: #00bfa6;
+  color: #fff;
+  font-weight: bold;
+}
+</style>
 </head>
-
 <body>
 
-<!-- Background picker -->
-<input type="file" id="bgPicker">
+<div id="chat-container"></div>
 
-<div id="chat"></div>
-
-<div id="bar">
-  <input id="text" type="text" placeholder="Type message...">
-  <input type="file" id="img">
-  <button onclick="send()">Send</button>
+<div id="input-container">
+  <input type="text" id="text" placeholder="Type a message..."/>
+  <button id="send">Send</button>
 </div>
 
-
 <script>
-/* 🔥 SUPABASE CONNECTED */
-const supabase = window.supabase.createClient(
-  "https://hfzqtavmibzfivcsppxw.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmenF0YXZtaWJ6Zml2Y3NwcHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MjMyNDksImV4cCI6MjA4NjE5OTI0OX0.VNiwt6SSHjHUln6fJJ3ypjYvNG_u61krVK49lH89eLc"
-);
+// ✅ Supabase setup with your anon public key
+const supabaseUrl = "https://hfzqtavmibzfivcsppxw.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmenF0YXZtaWJ6Zml2Y3NwcHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MjMyNDksImV4cCI6MjA4NjE5OTI0OX0.VNiwt6SSHjHUln6fJJ3ypjYvNG_u61krVK49lH89eLc";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+// username for testing
+const username = prompt("Enter your name:", "Sonu");
 
-/* username */
-const username = prompt("Enter your name");
-
-const chat = document.getElementById("chat");
-
-
-/* background change */
-bgPicker.onchange = e=>{
-  const r=new FileReader();
-  r.onload=()=>document.body.style.backgroundImage=`url(${r.result})`;
-  r.readAsDataURL(e.target.files[0]);
-};
-
-
-/* send message */
-async function send(){
-
-  const text=document.getElementById("text").value;
-  const file=document.getElementById("img").files[0];
-
-  let image=null;
-
-  if(file){
-    const r=new FileReader();
-    r.onload=async ()=>{
-      image=r.result;
-
-      await supabase.from("messages").insert({
-        text:text,
-        user:username,
-        image:image
-      });
-    };
-    r.readAsDataURL(file);
-  }
-  else{
-    await supabase.from("messages").insert({
-      text:text,
-      user:username
-    });
-  }
-
-  document.getElementById("text").value="";
-}
-
-
-/* load old messages */
-async function load(){
-  const {data}=await supabase
+// fetch and show messages
+async function fetchMessages() {
+  let { data, error } = await supabase
     .from("messages")
     .select("*")
-    .order("id");
-
-  data.forEach(addMsg);
-}
-
-
-/* realtime listener */
-supabase.channel("chat")
-.on(
-  "postgres_changes",
-  {event:"INSERT",schema:"public",table:"messages"},
-  payload=>addMsg(payload.new)
-)
-.subscribe();
-
-
-function addMsg(m){
-  const div=document.createElement("div");
-  div.className="msg "+(m.user===username?"me":"other");
-
-  div.innerHTML=`<b>${m.user}</b><br>${m.text||""}`;
-
-  if(m.image){
-    div.innerHTML+=`<br><img src="${m.image}">`;
+    .order("id", { ascending: true });
+  if (error) console.log(error);
+  else {
+    const chat = document.getElementById("chat-container");
+    chat.innerHTML = "";
+    data.forEach(msg => {
+      const div = document.createElement("div");
+      div.className = "message " + (msg.user === username ? "user2" : "user1");
+      div.textContent = msg.user + ": " + msg.text;
+      chat.appendChild(div);
+    });
+    chat.scrollTop = chat.scrollHeight;
   }
-
-  chat.appendChild(div);
-  chat.scrollTop=chat.scrollHeight;
 }
 
+// send message
+async function sendMessage() {
+  const textInput = document.getElementById("text");
+  const text = textInput.value;
+  if (!text) return;
 
-load();
+  let { data, error } = await supabase
+    .from("messages")
+    .insert([{ user: username, text: text }]);
+  
+  if (error) console.log(error);
+  else {
+    textInput.value = "";
+    fetchMessages();
+  }
+}
 
+// button click
+document.getElementById("send").addEventListener("click", sendMessage);
+
+// realtime subscription
+supabase
+  .channel('messages')
+  .on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'messages' },
+    fetchMessages
+  )
+  .subscribe();
+
+// fetch messages every 2 sec (backup for mobile)
+setInterval(fetchMessages, 2000);
 </script>
 
 </body>
